@@ -1,0 +1,49 @@
+services:
+  mysql-primary:
+    image: mysql:8.0
+    container_name: mysql-primary
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ecommerce_ops
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+    volumes:
+      - primary-data:/var/lib/mysql
+    networks:
+      - dbre-net
+
+  mysql-replica:
+    image: mysql:8.0
+    container_name: mysql-replica
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    command:
+      - --server-id=2
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --read-only=ON
+    volumes:
+      - replica-data:/var/lib/mysql
+    networks:
+      - dbre-net
+    depends_on:
+      - mysql-primary
+
+volumes:
+  primary-data:
+  replica-data:
+
+networks:
+  dbre-net:
